@@ -1,0 +1,1149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Tanabata — One Night a Year</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Kiwi+Maru:wght@300;400;500&family=Zen+Maru+Gothic:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#f3efff;
+    --ink-dim:#b8b4d9;
+    --panel:rgba(16,14,46,.82);
+    --panel-line:rgba(255,255,255,.14);
+    --pink:#ff8fab;
+    --gold:#ffd166;
+    --blue:#8ecae6;
+    --green:#b5e48c;
+    --lav:#cdb4db;
+    --font-display:'Kiwi Maru','Zen Maru Gothic','Hiragino Maru Gothic ProN',sans-serif;
+    --font-body:'Zen Maru Gothic','Kiwi Maru','Hiragino Maru Gothic ProN',sans-serif;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;height:100%;overflow:hidden;background:#0a0e2a;font-family:var(--font-body);color:var(--ink);}
+  #sky{position:fixed;inset:0;display:block;touch-action:manipulation;}
+
+  /* ---------- HUD ---------- */
+  #hud{position:fixed;top:14px;left:0;right:0;display:flex;flex-direction:column;align-items:center;gap:4px;pointer-events:none;z-index:5;transition:opacity .5s;}
+  #hud.hidden{opacity:0;}
+  #actLabel{font-family:var(--font-display);font-size:clamp(15px,2.4vw,19px);letter-spacing:.14em;color:var(--ink);text-shadow:0 0 14px rgba(140,150,255,.7);}
+  #progressLabel{font-size:clamp(12px,2vw,14px);color:var(--ink-dim);letter-spacing:.06em;}
+
+  /* ---------- Overlay cards ---------- */
+  .overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:20px;z-index:10;background:rgba(6,7,26,.35);backdrop-filter:blur(2px);transition:opacity .6s;}
+  .overlay.gone{opacity:0;pointer-events:none;}
+  .card{background:var(--panel);border:1px solid var(--panel-line);border-radius:22px;max-width:430px;width:100%;padding:28px 26px 24px;text-align:center;box-shadow:0 10px 60px rgba(0,0,10,.6), inset 0 0 40px rgba(120,110,255,.06);}
+  .card .eyebrow{font-size:11px;letter-spacing:.32em;color:var(--ink-dim);text-transform:uppercase;margin-bottom:10px;}
+  .card h1{font-family:var(--font-display);font-weight:500;font-size:clamp(22px,5vw,30px);margin:0 0 4px;letter-spacing:.05em;}
+  .card h1 .jp{display:block;font-size:.55em;color:var(--gold);letter-spacing:.5em;margin-top:6px;}
+  .card p{font-size:clamp(13.5px,2.6vw,15px);line-height:1.75;color:var(--ink-dim);margin:14px 0 0;}
+  .card p b{color:var(--ink);font-weight:500;}
+  .btn{margin-top:22px;font-family:var(--font-display);font-size:15px;letter-spacing:.12em;color:#1b1440;background:linear-gradient(135deg,#ffd166,#ffb4c6);border:none;border-radius:999px;padding:12px 34px;cursor:pointer;box-shadow:0 4px 22px rgba(255,190,150,.35);transition:transform .15s, box-shadow .15s;}
+  .btn:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(255,190,150,.5);}
+  .btn:focus-visible{outline:2px solid #fff;outline-offset:3px;}
+
+  /* ---------- Act 1 : loom ---------- */
+  #loomPanel{position:fixed;left:50%;bottom:max(20px, env(safe-area-inset-bottom));transform:translateX(-50%);z-index:6;background:var(--panel);border:1px solid var(--panel-line);border-radius:20px;padding:16px 18px 18px;width:min(400px,92vw);display:none;box-shadow:0 8px 44px rgba(0,0,10,.55);}
+  #loomPanel.show{display:block;animation:rise .5s ease both;}
+  @keyframes rise{from{opacity:0;transform:translate(-50%,24px);}to{opacity:1;transform:translate(-50%,0);}}
+  .loom-title{font-size:12px;letter-spacing:.22em;color:var(--ink-dim);text-align:center;margin-bottom:10px;text-transform:uppercase;}
+  #cloth{display:flex;flex-direction:column;gap:5px;margin-bottom:12px;}
+  .cloth-row{display:flex;gap:5px;justify-content:center;}
+  .cell{width:34px;height:22px;border-radius:6px;background:rgba(255,255,255,.07);border:1px dashed rgba(255,255,255,.18);transition:background .25s, border .25s, transform .25s;}
+  .cell.filled{border:1px solid rgba(255,255,255,.28);box-shadow:inset 0 -3px 0 rgba(0,0,0,.18), 0 0 10px rgba(255,255,255,.12);}
+  .cell.pop{transform:scale(1.18);}
+  #patternRow{display:flex;gap:6px;justify-content:center;margin-bottom:12px;align-items:center;}
+  #patternRow .dot{width:16px;height:16px;border-radius:50%;box-shadow:0 0 8px rgba(255,255,255,.25);}
+  #patternRow .dot.done{opacity:.25;transform:scale(.8);}
+  #patternRow .hint{font-size:11px;color:var(--ink-dim);letter-spacing:.1em;margin-right:6px;}
+  #threads{display:flex;gap:12px;justify-content:center;}
+  .thread{width:52px;height:52px;border-radius:50%;border:2px solid rgba(255,255,255,.35);cursor:pointer;position:relative;transition:transform .12s;box-shadow:0 3px 14px rgba(0,0,10,.4), inset 0 -6px 10px rgba(0,0,0,.2);}
+  .thread:active{transform:scale(.92);}
+  .thread.wrong{animation:shake .3s;}
+  @keyframes shake{25%{transform:translateX(-5px);}50%{transform:translateX(5px);}75%{transform:translateX(-3px);}}
+  .thread::after{content:"";position:absolute;top:8px;left:10px;width:14px;height:8px;border-radius:50%;background:rgba(255,255,255,.45);filter:blur(1px);}
+
+  /* ---------- Act 3 : timing bar ---------- */
+  #hopPanel{position:fixed;left:50%;bottom:max(24px, env(safe-area-inset-bottom));transform:translateX(-50%);z-index:6;display:none;flex-direction:column;align-items:center;gap:10px;}
+  #hopPanel.show{display:flex;animation:rise .5s ease both;}
+  #hopHint{font-size:12.5px;color:var(--ink-dim);letter-spacing:.08em;background:var(--panel);border:1px solid var(--panel-line);padding:6px 16px;border-radius:999px;}
+  #track{position:relative;width:min(300px,80vw);height:16px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid var(--panel-line);overflow:hidden;}
+  #safe{position:absolute;top:0;bottom:0;left:35%;width:30%;background:linear-gradient(90deg,rgba(255,209,102,.15),rgba(255,209,102,.75),rgba(255,209,102,.15));}
+  #marker{position:absolute;top:-2px;width:9px;height:20px;border-radius:4px;background:#fff;box-shadow:0 0 10px #fff;}
+  #hopBtn{font-family:var(--font-display);font-size:16px;letter-spacing:.14em;color:#1b1440;background:linear-gradient(135deg,#8ecae6,#cdb4db);border:none;border-radius:999px;padding:13px 46px;cursor:pointer;box-shadow:0 4px 22px rgba(140,180,255,.35);}
+  #hopBtn:active{transform:scale(.95);}
+
+  /* ---------- Wish / tanzaku ---------- */
+  .tanzaku-input{margin:18px auto 0;width:190px;background:linear-gradient(180deg,#ffb3c8,#ff8fab);border-radius:8px;padding:16px 12px 20px;box-shadow:0 6px 20px rgba(0,0,10,.4);position:relative;}
+  .tanzaku-input::before{content:"";position:absolute;top:-11px;left:50%;transform:translateX(-50%);width:5px;height:14px;background:#e6dfae;border-radius:3px;}
+  .tanzaku-input textarea{width:100%;height:88px;border:none;background:transparent;resize:none;font-family:var(--font-body);font-size:14px;color:#5a1030;text-align:center;line-height:1.6;outline:none;}
+  .tanzaku-input textarea::placeholder{color:rgba(90,16,48,.45);}
+
+  #finalScene{display:none;position:fixed;inset:0;z-index:12;align-items:center;justify-content:center;flex-direction:column;background:rgba(6,7,26,.25);}
+  #finalScene.show{display:flex;}
+  .bamboo{font-size:clamp(90px,22vw,150px);line-height:1;filter:drop-shadow(0 6px 18px rgba(0,0,20,.5));animation:sway 5s ease-in-out infinite;transform-origin:bottom center;}
+  .hung{margin-top:-16px;width:150px;background:linear-gradient(180deg,#ffb3c8,#ff8fab);border-radius:8px;padding:14px 10px 18px;font-size:13.5px;color:#5a1030;text-align:center;line-height:1.6;box-shadow:0 6px 20px rgba(0,0,10,.45);animation:sway 5s ease-in-out infinite;transform-origin:top center;position:relative;word-wrap:break-word;}
+  .hung::before{content:"";position:absolute;top:-10px;left:50%;transform:translateX(-50%);width:5px;height:12px;background:#e6dfae;border-radius:3px;}
+  @keyframes sway{0%,100%{transform:rotate(-2.4deg);}50%{transform:rotate(2.4deg);}}
+  #finalMsg{margin-top:26px;text-align:center;font-family:var(--font-display);font-size:clamp(15px,3vw,18px);letter-spacing:.08em;text-shadow:0 0 16px rgba(150,160,255,.8);padding:0 24px;}
+  #finalSub{margin-top:8px;font-size:13px;color:var(--ink-dim);text-align:center;padding:0 24px;}
+
+  #toast{position:fixed;top:18%;left:50%;transform:translateX(-50%);z-index:9;background:var(--panel);border:1px solid var(--panel-line);border-radius:999px;padding:9px 22px;font-size:13.5px;letter-spacing:.06em;color:var(--ink);opacity:0;transition:opacity .4s;pointer-events:none;white-space:nowrap;box-shadow:0 6px 24px rgba(0,0,10,.5);}
+  #toast.show{opacity:1;}
+
+  #muteBtn{position:fixed;top:14px;right:14px;z-index:20;width:44px;height:44px;border-radius:50%;background:var(--panel);border:1px solid var(--panel-line);color:var(--ink);font-size:19px;cursor:pointer;box-shadow:0 4px 18px rgba(0,0,10,.4);transition:transform .15s;}
+  #muteBtn:active{transform:scale(.9);}
+  #muteBtn:focus-visible{outline:2px solid #fff;outline-offset:2px;}
+
+  @media (prefers-reduced-motion: reduce){
+    .bamboo,.hung{animation:none;}
+  }
+</style>
+</head>
+<body>
+<canvas id="sky"></canvas>
+
+<div id="hud" class="hidden">
+  <div id="actLabel"></div>
+  <div id="progressLabel"></div>
+</div>
+
+<div id="toast"></div>
+<button id="muteBtn" aria-label="Toggle sound">🔊</button>
+
+<!-- Intro -->
+<div class="overlay" id="introOverlay">
+  <div class="card">
+    <div class="eyebrow">A tiny tale for July 7th</div>
+    <h1>One Night a Year<span class="jp">七夕</span></h1>
+    <p>Orihime the weaver and Hikoboshi the cowherd fell so deeply in love that all their work was forgotten. The Sky King parted them across the Heavenly River — the Milky Way — allowing them to meet only on the seventh night of the seventh month.</p>
+    <p><b>Tonight is that night.</b> Help them find their way back to each other.</p>
+    <button class="btn" id="startBtn">Begin the night ✦</button>
+  </div>
+</div>
+
+<!-- Act transitions -->
+<div class="overlay gone" id="storyOverlay">
+  <div class="card">
+    <div class="eyebrow" id="storyEyebrow"></div>
+    <h1 id="storyTitle"></h1>
+    <p id="storyText"></p>
+    <button class="btn" id="storyBtn">Continue ✦</button>
+  </div>
+</div>
+
+<!-- Wish -->
+<div class="overlay gone" id="wishOverlay">
+  <div class="card">
+    <div class="eyebrow">The lovers are reunited</div>
+    <h1>Make a Wish<span class="jp">短冊</span></h1>
+    <p>On Tanabata, wishes are written on paper strips called <b>tanzaku</b> and hung on bamboo, so the stars may carry them.</p>
+    <div class="tanzaku-input">
+      <textarea id="wishText" maxlength="90" placeholder="write your wish here…"></textarea>
+    </div>
+    <button class="btn" id="hangBtn">Hang it on the bamboo 🎋</button>
+  </div>
+</div>
+
+<!-- Final scene -->
+<div id="finalScene">
+  <div class="bamboo">🎋</div>
+  <div class="hung" id="hungWish"></div>
+  <div id="finalMsg">Your wish sways beneath the Heavenly River.</div>
+  <div id="finalSub">May Orihime and Hikoboshi carry it with them. Happy Tanabata ✦</div>
+  <button class="btn" id="againBtn">Relive the night</button>
+</div>
+
+<!-- Act 1 loom -->
+<div id="loomPanel">
+  <div class="loom-title">Weave to the pattern</div>
+  <div id="cloth"></div>
+  <div id="patternRow"></div>
+  <div id="threads"></div>
+</div>
+
+<!-- Act 3 hop -->
+<div id="hopPanel">
+  <div id="hopHint">Hop when the light crosses the golden band</div>
+  <div id="track"><div id="safe"></div><div id="marker"></div></div>
+  <button id="hopBtn">Hop ✦</button>
+</div>
+
+<script>
+"use strict";
+/* ============================================================
+   TANABATA — One Night a Year
+   Act I   : Weave the cloth   (pattern matching)
+   Act II  : Gather the magpies (tap birds, shoo rain clouds)
+   Act III : The crossing       (timing hops over the bridge)
+   ============================================================ */
+
+/* ============================================================
+   SOUND — all synthesized live with the Web Audio API.
+   Plucks are tuned to the hirajoshi pentatonic scale (D root)
+   for a koto-like feel. A faint two-note drone breathes under
+   everything once the night begins.
+   ============================================================ */
+const Sound = (() => {
+  let ac = null, master = null, muted = false, padStarted = false;
+  const SCALE = [293.66, 311.13, 392.00, 440.00, 466.16, 587.33, 622.25, 784.00]; // D Eb G A Bb, up two-ish octaves
+
+  function ensure(){
+    if(!ac){
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if(!AC) return false;
+      ac = new AC();
+      master = ac.createGain();
+      master.gain.value = muted ? 0 : 0.55;
+      master.connect(ac.destination);
+    }
+    if(ac.state === 'suspended') ac.resume();
+    if(!padStarted){ startPad(); padStarted = true; }
+    return true;
+  }
+  const now = () => ac.currentTime;
+
+  // koto-ish pluck: triangle + soft octave partial through a closing lowpass
+  function pluck(freq, vol = 0.35, when = 0, dur = 0.9){
+    if(!ensure() || muted) return;
+    const t = now() + when;
+    const o = ac.createOscillator(), o2 = ac.createOscillator();
+    const g = ac.createGain(), g2 = ac.createGain(), f = ac.createBiquadFilter();
+    o.type = 'triangle';  o.frequency.value = freq;
+    o2.type = 'sine';     o2.frequency.value = freq * 2.01; // slight detune = shimmer
+    g2.gain.value = 0.25;
+    f.type = 'lowpass';
+    f.frequency.setValueAtTime(freq * 6, t);
+    f.frequency.exponentialRampToValueAtTime(freq * 1.5, t + dur);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(vol, t + 0.008);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(f); o2.connect(g2); g2.connect(f); f.connect(g); g.connect(master);
+    o.start(t); o2.start(t); o.stop(t + dur + .05); o2.stop(t + dur + .05);
+  }
+
+  // quick two-note bird chirp
+  function chirp(){
+    if(!ensure() || muted) return;
+    const t = now();
+    [0, 0.09].forEach((d, i) => {
+      const o = ac.createOscillator(), g = ac.createGain();
+      o.type = 'sine';
+      o.frequency.setValueAtTime(1700 + i * 250, t + d);
+      o.frequency.exponentialRampToValueAtTime(2500 + i * 250, t + d + 0.07);
+      g.gain.setValueAtTime(0.0001, t + d);
+      g.gain.exponentialRampToValueAtTime(0.15, t + d + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + d + 0.12);
+      o.connect(g); g.connect(master);
+      o.start(t + d); o.stop(t + d + 0.15);
+    });
+  }
+
+  // filtered-noise puff for popping a cloud
+  function puff(){
+    if(!ensure() || muted) return;
+    const t = now();
+    const len = Math.floor(ac.sampleRate * 0.25);
+    const buf = ac.createBuffer(1, len, ac.sampleRate);
+    const d = buf.getChannelData(0);
+    for(let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len);
+    const src = ac.createBufferSource(); src.buffer = buf;
+    const f = ac.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 650; f.Q.value = 0.8;
+    const g = ac.createGain(); g.gain.value = 0.35;
+    src.connect(f); f.connect(g); g.connect(master);
+    src.start(t);
+  }
+
+  // raindrop plink (low=true for the sadder, startled-magpie version)
+  function plink(low = false){
+    if(!ensure() || muted) return;
+    const t = now();
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.type = 'sine';
+    const f0 = low ? 520 : 1250;
+    o.frequency.setValueAtTime(f0, t);
+    o.frequency.exponentialRampToValueAtTime(f0 * 0.6, t + 0.16);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.22, t + 0.008);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.25);
+    o.connect(g); g.connect(master);
+    o.start(t); o.stop(t + 0.3);
+  }
+
+  // muted low thud for a wrong thread
+  function thud(){
+    if(!ensure() || muted) return;
+    const t = now();
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(130, t);
+    o.frequency.exponentialRampToValueAtTime(70, t + 0.12);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.25, t + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
+    o.connect(g); g.connect(master);
+    o.start(t); o.stop(t + 0.2);
+  }
+
+  function arp(base = 0, n = 4, gap = 0.09, vol = 0.3){
+    for(let i = 0; i < n; i++){
+      const idx = base + i;
+      pluck(SCALE[idx % SCALE.length] * (idx >= SCALE.length ? 2 : 1), vol, i * gap);
+    }
+  }
+
+  // reunion: ascending run + warm slow chord swell
+  function reunion(){
+    if(!ensure() || muted) return;
+    arp(0, 8, 0.11, 0.3);
+    const t = now();
+    [293.66, 440, 587.33].forEach(fr => {
+      const o = ac.createOscillator(), g = ac.createGain();
+      o.type = 'sine'; o.frequency.value = fr;
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.linearRampToValueAtTime(0.06, t + 1.2);
+      g.gain.linearRampToValueAtTime(0.0001, t + 3.5);
+      o.connect(g); g.connect(master);
+      o.start(t); o.stop(t + 3.6);
+    });
+  }
+
+  // wind-chime shimmer for hanging the wish
+  function chime(){
+    if(!ensure() || muted) return;
+    for(let i = 0; i < 6; i++){
+      pluck(SCALE[Math.floor(Math.random() * 4) + 4] * 2, 0.13, i * 0.13 + Math.random() * 0.05, 1.4);
+    }
+  }
+
+  const tick = () => pluck(SCALE[0], 0.12, 0, 0.25);
+
+  // ambience: a whisper-quiet undertone plus sparse, random high
+  // "star chime" plucks every few seconds — more night sky than drone
+  function startPad(){
+    const padGain = ac.createGain();
+    padGain.gain.value = 0;
+    const padFilter = ac.createBiquadFilter();
+    padFilter.type = 'lowpass'; padFilter.frequency.value = 320; // keep it dark and soft
+    padGain.connect(padFilter); padFilter.connect(master);
+    [146.83, 220.0].forEach((fr, i) => {
+      const o = ac.createOscillator(); o.type = 'sine'; o.frequency.value = fr;
+      const g = ac.createGain(); g.gain.value = i ? 0.4 : 0.7;
+      o.connect(g); g.connect(padGain);
+      o.start();
+    });
+    const lfo = ac.createOscillator(), lg = ac.createGain();
+    lfo.frequency.value = 0.05; lg.gain.value = 0.005;
+    lfo.connect(lg); lg.connect(padGain.gain);
+    padGain.gain.setValueAtTime(0, now());
+    padGain.gain.linearRampToValueAtTime(0.011, now() + 4); // ~1/3 the old level
+    lfo.start();
+    scheduleTwinkle();
+  }
+
+  function scheduleTwinkle(){
+    setTimeout(() => {
+      if(ac && !muted){
+        // a faint, long-ringing high note from the scale
+        const n = SCALE[4 + Math.floor(Math.random() * 4)];
+        pluck(n * 2, 0.045, 0, 2.4);
+        // occasionally answered by a second, even softer note
+        if(Math.random() < 0.35){
+          pluck(SCALE[Math.floor(Math.random() * 4)] * 2, 0.035, 0.5, 2.4);
+        }
+      }
+      scheduleTwinkle();
+    }, 3000 + Math.random() * 5000);
+  }
+
+  function toggleMute(){
+    muted = !muted;
+    if(master) master.gain.value = muted ? 0 : 0.55;
+    return muted;
+  }
+
+  return { ensure, pluck, chirp, puff, plink, thud, arp, reunion, chime, tick, toggleMute, SCALE };
+})();
+
+const canvas = document.getElementById('sky');
+const ctx = canvas.getContext('2d');
+let W = 0, H = 0, DPR = 1;
+const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+const state = {
+  phase: 'intro',          // intro | act1 | act2 | act3 | reunion | wish | final
+  time: 0,
+};
+
+/* ---------- layout anchors (recomputed on resize) ---------- */
+const layout = {};
+function computeLayout(){
+  // Heavenly River: diagonal band, lower-left to upper-right
+  layout.riverA = { x: -W*0.1, y: H*0.80 };
+  layout.riverB = { x: W*1.1,  y: H*0.22 };
+  layout.bandW  = Math.max(90, Math.min(W,H) * 0.20);
+  // river direction + normal
+  const dx = layout.riverB.x - layout.riverA.x, dy = layout.riverB.y - layout.riverA.y;
+  const len = Math.hypot(dx,dy);
+  layout.dir = { x: dx/len, y: dy/len };
+  layout.nrm = { x: -layout.dir.y, y: layout.dir.x }; // points "down-right" side
+  // center of river at mid-screen
+  layout.mid = riverPointAtX(W*0.5);
+  // Vega (Orihime) upper-left of band, Altair (Hikoboshi) lower-right
+  const off = layout.bandW*0.5 + Math.min(W,H)*0.16;
+  layout.vega   = { x: layout.mid.x - layout.nrm.x*off - layout.dir.x*W*0.16,
+                    y: layout.mid.y - layout.nrm.y*off - layout.dir.y*W*0.16 };
+  layout.altair = { x: layout.mid.x + layout.nrm.x*off + layout.dir.x*W*0.16,
+                    y: layout.mid.y + layout.nrm.y*off + layout.dir.y*W*0.16 };
+  layout.vega.x = clamp(layout.vega.x, W*0.12, W*0.88);
+  layout.vega.y = clamp(layout.vega.y, H*0.14, H*0.86);
+  layout.altair.x = clamp(layout.altair.x, W*0.12, W*0.88);
+  layout.altair.y = clamp(layout.altair.y, H*0.14, H*0.60);
+  // Bridge: from Vega-side bank to Altair-side bank across the band
+  const half = layout.bandW*0.62;
+  layout.bridgeStart = { x: layout.mid.x - layout.nrm.x*half, y: layout.mid.y - layout.nrm.y*half };
+  layout.bridgeEnd   = { x: layout.mid.x + layout.nrm.x*half, y: layout.mid.y + layout.nrm.y*half };
+  layout.slots = [];
+  for(let i=0;i<BRIDGE_SLOTS;i++){
+    const t = i/(BRIDGE_SLOTS-1);
+    const arc = Math.sin(t*Math.PI) * layout.bandW*0.14; // gentle upstream bow
+    layout.slots.push({
+      x: lerp(layout.bridgeStart.x, layout.bridgeEnd.x, t) - layout.dir.x*arc,
+      y: lerp(layout.bridgeStart.y, layout.bridgeEnd.y, t) - layout.dir.y*arc,
+    });
+  }
+}
+function riverPointAtX(x){
+  const t = (x - layout.riverA.x) / (layout.riverB.x - layout.riverA.x);
+  return { x, y: lerp(layout.riverA.y, layout.riverB.y, t) };
+}
+function distToRiver(p){
+  const ax=layout.riverA.x, ay=layout.riverA.y;
+  const t = ((p.x-ax)*layout.dir.x + (p.y-ay)*layout.dir.y);
+  const px = ax + layout.dir.x*t, py = ay + layout.dir.y*t;
+  return Math.hypot(p.x-px, p.y-py);
+}
+
+/* ---------- helpers ---------- */
+const lerp = (a,b,t)=>a+(b-a)*t;
+const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
+const rand = (a,b)=>a+Math.random()*(b-a);
+const TAU = Math.PI*2;
+
+/* ---------- starfield ---------- */
+let stars=[], riverDust=[];
+function buildSky(){
+  stars=[]; riverDust=[];
+  const n = Math.round(W*H/9000);
+  for(let i=0;i<n;i++){
+    stars.push({x:Math.random()*W, y:Math.random()*H, r:rand(.4,1.5), p:Math.random()*TAU, s:rand(.5,1.6)});
+  }
+  const m = Math.round(W*H/2600);
+  for(let i=0;i<m;i++){
+    const t=Math.random();
+    const cx=lerp(layout.riverA.x, layout.riverB.x, t), cy=lerp(layout.riverA.y, layout.riverB.y, t);
+    const g = gauss()*layout.bandW*0.42;
+    riverDust.push({
+      x:cx+layout.nrm.x*g, y:cy+layout.nrm.y*g,
+      r:rand(.4,1.7), p:Math.random()*TAU, s:rand(.4,1.4),
+      warm:Math.random()<.22, drift:rand(4,14),
+    });
+  }
+}
+function gauss(){ return (Math.random()+Math.random()+Math.random()-1.5)/1.5; }
+
+/* ---------- entities ---------- */
+const BRIDGE_SLOTS = 8;
+let bridgeMagpies = [];   // {slot, x,y, settled, flap}
+let freeMagpies  = [];    // act 2 wandering birds
+let clouds       = [];    // rain clouds
+let puffs        = [];    // cloud pop particles
+let sparkles     = [];    // reunion particles
+let raindrops    = [];    // miss feedback
+let orihime = { x:0, y:0, slot:-1, hopping:false, hopT:0, from:null, to:null, bob:0 };
+let hikoboshi = { x:0, y:0 };
+let reunionT = -1;
+let lanternWishes = []; // decorative rising lights in final phase
+
+/* ============================================================
+   RENDERING
+   ============================================================ */
+function drawSky(t){
+  const g = ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'#0a0e2e');
+  g.addColorStop(.5,'#161344');
+  g.addColorStop(1,'#241a52');
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+
+  // stars
+  for(const s of stars){
+    const tw = reducedMotion ? .8 : .55 + .45*Math.sin(t*0.001*s.s + s.p);
+    ctx.globalAlpha = tw*.9;
+    ctx.fillStyle = '#e8ecff';
+    ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,TAU); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
+function drawRiver(t){
+  // soft band glow
+  ctx.save();
+  const c1 = layout.riverA, c2 = layout.riverB;
+  const gLine = ctx.createLinearGradient(
+    layout.mid.x - layout.nrm.x*layout.bandW, layout.mid.y - layout.nrm.y*layout.bandW,
+    layout.mid.x + layout.nrm.x*layout.bandW, layout.mid.y + layout.nrm.y*layout.bandW
+  );
+  gLine.addColorStop(0,'rgba(140,150,255,0)');
+  gLine.addColorStop(.5,'rgba(160,170,255,0.14)');
+  gLine.addColorStop(1,'rgba(140,150,255,0)');
+  ctx.strokeStyle = gLine;
+  ctx.lineWidth = layout.bandW*2;
+  ctx.lineCap='round';
+  ctx.beginPath(); ctx.moveTo(c1.x,c1.y); ctx.lineTo(c2.x,c2.y); ctx.stroke();
+
+  // dust
+  for(const d of riverDust){
+    const tw = reducedMotion ? .7 : .35 + .65*Math.abs(Math.sin(t*0.0012*d.s + d.p));
+    const slide = reducedMotion ? 0 : Math.sin(t*0.0002 + d.p)*d.drift;
+    ctx.globalAlpha = tw*.85;
+    ctx.fillStyle = d.warm ? '#ffe3b8' : '#cfd8ff';
+    ctx.beginPath();
+    ctx.arc(d.x + layout.dir.x*slide, d.y + layout.dir.y*slide, d.r, 0, TAU);
+    ctx.fill();
+  }
+  ctx.globalAlpha=1;
+  ctx.restore();
+}
+
+function drawGlowStar(p, t, hue, label, labelJp, side){
+  const pulse = reducedMotion ? 1 : 1 + Math.sin(t*0.002)*0.08;
+  const R = Math.min(W,H)*0.028*pulse;
+  const g = ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,R*5);
+  g.addColorStop(0, hue.core);
+  g.addColorStop(.25, hue.mid);
+  g.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=g;
+  ctx.beginPath(); ctx.arc(p.x,p.y,R*5,0,TAU); ctx.fill();
+  // 4-point twinkle
+  ctx.strokeStyle=hue.core; ctx.lineWidth=1.4; ctx.globalAlpha=.9;
+  ctx.beginPath();
+  ctx.moveTo(p.x-R*2.4,p.y); ctx.lineTo(p.x+R*2.4,p.y);
+  ctx.moveTo(p.x,p.y-R*2.4); ctx.lineTo(p.x,p.y+R*2.4);
+  ctx.stroke();
+  ctx.globalAlpha=1;
+  ctx.fillStyle=hue.core;
+  ctx.beginPath(); ctx.arc(p.x,p.y,R*.8,0,TAU); ctx.fill();
+  // label
+  ctx.font = `500 ${Math.max(12,Math.min(W,H)*0.021)}px 'Kiwi Maru', sans-serif`;
+  ctx.textAlign='center';
+  ctx.fillStyle='rgba(240,238,255,.92)';
+  ctx.fillText(label, p.x, p.y + R*4.6);
+  ctx.fillStyle='rgba(200,198,235,.6)';
+  ctx.font = `400 ${Math.max(10,Math.min(W,H)*0.016)}px 'Kiwi Maru', sans-serif`;
+  ctx.fillText(labelJp, p.x, p.y + R*4.6 + Math.max(14,Math.min(W,H)*0.024));
+}
+
+function drawMagpie(x,y,scale,flap,facing=1,settled=false){
+  ctx.save();
+  ctx.translate(x,y); ctx.scale(scale*facing, scale);
+  const wing = settled ? Math.sin(flap)*0.12 : Math.sin(flap)*0.85;
+  // tail
+  ctx.fillStyle='#232544';
+  ctx.beginPath(); ctx.moveTo(-9,1); ctx.lineTo(-19,-3); ctx.lineTo(-18,4); ctx.closePath(); ctx.fill();
+  // wings
+  ctx.fillStyle='#2b2d4f';
+  ctx.save(); ctx.rotate(-0.5 - wing);
+  ctx.beginPath(); ctx.ellipse(-2,-6,10,4.6,0.4,0,TAU); ctx.fill();
+  // white wing patch
+  ctx.fillStyle='#e9ecff';
+  ctx.beginPath(); ctx.ellipse(-4,-6,4,2,0.4,0,TAU); ctx.fill();
+  ctx.restore();
+  // body
+  ctx.fillStyle='#2b2d4f';
+  ctx.beginPath(); ctx.ellipse(0,0,10,7,0,0,TAU); ctx.fill();
+  // belly
+  ctx.fillStyle='#f4f2ff';
+  ctx.beginPath(); ctx.ellipse(1.5,2.5,6.5,4,0,0,TAU); ctx.fill();
+  // head
+  ctx.fillStyle='#2b2d4f';
+  ctx.beginPath(); ctx.arc(9,-4,5.4,0,TAU); ctx.fill();
+  // beak
+  ctx.fillStyle='#ffb35c';
+  ctx.beginPath(); ctx.moveTo(13.6,-4.6); ctx.lineTo(18,-3.4); ctx.lineTo(13.6,-2.2); ctx.closePath(); ctx.fill();
+  // eye
+  ctx.fillStyle='#fff';
+  ctx.beginPath(); ctx.arc(10.4,-5,1.7,0,TAU); ctx.fill();
+  ctx.fillStyle='#161631';
+  ctx.beginPath(); ctx.arc(10.9,-5,1,0,TAU); ctx.fill();
+  ctx.restore();
+}
+
+function drawPerson(x,y,scale,who,t){
+  ctx.save();
+  ctx.translate(x,y); ctx.scale(scale,scale);
+  const sway = reducedMotion?0:Math.sin(t*0.003)*0.04;
+  ctx.rotate(sway);
+  if(who==='orihime'){
+    // kimono
+    const g=ctx.createLinearGradient(0,-8,0,16);
+    g.addColorStop(0,'#ff9fb8'); g.addColorStop(1,'#e05a86');
+    ctx.fillStyle=g;
+    ctx.beginPath(); ctx.moveTo(0,-8); ctx.lineTo(11,16); ctx.lineTo(-11,16); ctx.closePath(); ctx.fill();
+    // sash
+    ctx.fillStyle='#ffd166'; ctx.fillRect(-7.4,1,14.8,3.4);
+    // head
+    ctx.fillStyle='#ffe4cf'; ctx.beginPath(); ctx.arc(0,-13,6.4,0,TAU); ctx.fill();
+    // hair
+    ctx.fillStyle='#33224d';
+    ctx.beginPath(); ctx.arc(0,-14.6,6.6,Math.PI*0.95,Math.PI*2.05); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(0,-21,4.4,3,0,0,TAU); ctx.fill();
+    // hair pin
+    ctx.fillStyle='#ffd166'; ctx.beginPath(); ctx.arc(4.6,-19.4,1.6,0,TAU); ctx.fill();
+  } else {
+    const g=ctx.createLinearGradient(0,-8,0,16);
+    g.addColorStop(0,'#9bd0f2'); g.addColorStop(1,'#4f7fc9');
+    ctx.fillStyle=g;
+    ctx.beginPath(); ctx.moveTo(0,-8); ctx.lineTo(11,16); ctx.lineTo(-11,16); ctx.closePath(); ctx.fill();
+    ctx.fillStyle='#f4f2ff'; ctx.fillRect(-7.4,1,14.8,3.4);
+    ctx.fillStyle='#ffe4cf'; ctx.beginPath(); ctx.arc(0,-13,6.4,0,TAU); ctx.fill();
+    ctx.fillStyle='#22304d';
+    ctx.beginPath(); ctx.arc(0,-14.8,6.6,Math.PI*1.0,Math.PI*2.0); ctx.fill();
+  }
+  // face
+  ctx.fillStyle='#33224d';
+  ctx.beginPath(); ctx.arc(-2.2,-13,0.9,0,TAU); ctx.arc(2.2,-13,0.9,0,TAU); ctx.fill();
+  ctx.strokeStyle='#c96a6a'; ctx.lineWidth=.9;
+  ctx.beginPath(); ctx.arc(0,-11.4,1.6,0.15*Math.PI,0.85*Math.PI); ctx.stroke();
+  ctx.restore();
+}
+
+function drawCloud(c,t){
+  ctx.save();
+  ctx.translate(c.x,c.y);
+  ctx.globalAlpha = c.alpha;
+  ctx.fillStyle='#8d92b8';
+  const s=c.s;
+  ctx.beginPath();
+  ctx.arc(-18*s,4*s,14*s,0,TAU);
+  ctx.arc(0,0,18*s,0,TAU);
+  ctx.arc(19*s,5*s,13*s,0,TAU);
+  ctx.fill();
+  ctx.fillStyle='#a4a9cc';
+  ctx.beginPath(); ctx.arc(-4*s,-6*s,12*s,0,TAU); ctx.fill();
+  // grumpy face
+  ctx.fillStyle='#3c3f63';
+  ctx.beginPath(); ctx.arc(-6*s,-2*s,1.8*s,0,TAU); ctx.arc(5*s,-2*s,1.8*s,0,TAU); ctx.fill();
+  ctx.strokeStyle='#3c3f63'; ctx.lineWidth=1.4*s;
+  ctx.beginPath(); ctx.arc(0,4*s,3.4*s, Math.PI*1.15, Math.PI*1.85); ctx.stroke();
+  // rain
+  ctx.strokeStyle='rgba(160,190,255,.75)'; ctx.lineWidth=1.6*s;
+  for(let i=-1;i<=1;i++){
+    const ry = ((t*0.06 + i*23) % 26);
+    ctx.beginPath();
+    ctx.moveTo(i*13*s, 16*s + ry*s*0.6);
+    ctx.lineTo(i*13*s - 2.5*s, 22*s + ry*s*0.6);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawBridge(t){
+  for(const m of bridgeMagpies){
+    if(!m.settled){
+      m.x = lerp(m.x, m.tx, 0.08);
+      m.y = lerp(m.y, m.ty, 0.08);
+      if(Math.hypot(m.x-m.tx,m.y-m.ty)<2){ m.settled=true; }
+    }
+    const bob = (m.settled && !reducedMotion) ? Math.sin(t*0.003+m.slot)*2.4 : 0;
+    drawMagpie(m.x, m.y + bob, magpieScale(), t*0.02+m.slot*2, 1, m.settled);
+  }
+}
+function magpieScale(){ return clamp(Math.min(W,H)/520, .75, 1.35); }
+function personScale(){ return clamp(Math.min(W,H)/430, .9, 1.7); }
+
+/* ============================================================
+   GAME LOOP
+   ============================================================ */
+let last=0;
+function loop(t){
+  const dt = Math.min(48, t-last); last=t; state.time=t;
+  ctx.clearRect(0,0,W,H);
+  drawSky(t);
+  drawRiver(t);
+
+  const reunited = state.phase==='reunion'||state.phase==='wish'||state.phase==='final';
+  if(!reunited){
+    drawGlowStar(layout.vega, t, {core:'#ffe0ec', mid:'rgba(255,160,200,.35)'}, 'Orihime · Vega','織姫');
+    drawGlowStar(layout.altair, t, {core:'#dceaff', mid:'rgba(150,190,255,.35)'}, 'Hikoboshi · Altair','彦星');
+  }
+
+  if(state.phase==='act2' || state.phase==='act3' || reunited) drawBridge(t);
+
+  if(state.phase==='act2') updateAct2(t,dt);
+  if(state.phase==='act3') updateAct3(t,dt);
+  if(reunited) updateReunion(t,dt);
+
+  // characters
+  if(state.phase==='act3'){
+    drawPerson(orihime.x, orihime.y, personScale(), 'orihime', t);
+    drawPerson(hikoboshi.x, hikoboshi.y, personScale(), 'hikoboshi', t);
+  }
+
+  // effects
+  updatePuffs(dt); updateSparkles(dt); updateRain(dt);
+
+  requestAnimationFrame(loop);
+}
+
+/* ============================================================
+   ACT 1 — WEAVING (DOM driven)
+   ============================================================ */
+const PALETTE = [
+  {name:'pink', c:'#ff8fab'},
+  {name:'gold', c:'#ffd166'},
+  {name:'blue', c:'#8ecae6'},
+  {name:'lav',  c:'#cdb4db'},
+];
+const ROWS_NEEDED = 3, ROW_LEN = 5;
+let act1 = null;
+
+function startAct1(){
+  state.phase='act1';
+  act1 = { row:0, idx:0, pattern:[] };
+  setHUD('Act I · The Weaving', `Rows woven 0 / ${ROWS_NEEDED}`);
+  const cloth = document.getElementById('cloth');
+  cloth.innerHTML='';
+  for(let r=0;r<ROWS_NEEDED;r++){
+    const row=document.createElement('div'); row.className='cloth-row';
+    for(let i=0;i<ROW_LEN;i++){ const c=document.createElement('div'); c.className='cell'; row.appendChild(c); }
+    cloth.appendChild(row);
+  }
+  const threads=document.getElementById('threads');
+  threads.innerHTML='';
+  PALETTE.forEach((p,pi)=>{
+    const b=document.createElement('button');
+    b.className='thread'; b.style.background=`radial-gradient(circle at 35% 30%, ${p.c}, ${shade(p.c,-30)})`;
+    b.setAttribute('aria-label','thread '+p.name);
+    b.addEventListener('click',()=>threadClick(pi,b));
+    threads.appendChild(b);
+  });
+  newPattern();
+  document.getElementById('loomPanel').classList.add('show');
+}
+function shade(hex,amt){
+  const n=parseInt(hex.slice(1),16);
+  let r=(n>>16)+amt,g=((n>>8)&255)+amt,b=(n&255)+amt;
+  r=clamp(r,0,255);g=clamp(g,0,255);b=clamp(b,0,255);
+  return `rgb(${r},${g},${b})`;
+}
+function newPattern(){
+  act1.pattern=[]; act1.idx=0;
+  for(let i=0;i<ROW_LEN;i++) act1.pattern.push(Math.floor(Math.random()*PALETTE.length));
+  const pr=document.getElementById('patternRow');
+  pr.innerHTML='<span class="hint">follow ⟶</span>';
+  act1.pattern.forEach(pi=>{
+    const d=document.createElement('div'); d.className='dot'; d.style.background=PALETTE[pi].c; pr.appendChild(d);
+  });
+}
+function threadClick(pi,btn){
+  if(state.phase!=='act1') return;
+  if(pi===act1.pattern[act1.idx]){
+    Sound.pluck(Sound.SCALE[act1.idx % Sound.SCALE.length], 0.35);
+    const rowEl=document.getElementById('cloth').children[act1.row];
+    const cell=rowEl.children[act1.idx];
+    cell.classList.add('filled','pop');
+    cell.style.background=PALETTE[pi].c;
+    setTimeout(()=>cell.classList.remove('pop'),220);
+    const dot=document.getElementById('patternRow').children[act1.idx+1];
+    if(dot) dot.classList.add('done');
+    act1.idx++;
+    if(act1.idx>=ROW_LEN){
+      act1.row++;
+      setHUD('Act I · The Weaving', `Rows woven ${act1.row} / ${ROWS_NEEDED}`);
+      if(act1.row>=ROWS_NEEDED){
+        Sound.arp(0,6,0.09,0.32);
+        document.getElementById('loomPanel').classList.remove('show');
+        toast('The cloth shimmers like starlight ✦');
+        setTimeout(()=>showStory(
+          'Act I complete',
+          'The Cloth Is Woven',
+          'Word of Orihime\u2019s diligence reaches the Sky King, and he softens. But the Heavenly River has no bridge\u2026 A flock of magpies, moved by her tears, offers their wings. <b>Tap the magpies</b> to gather them \u2014 and <b>tap the rain clouds</b> to shoo them away before they frighten the flock!',
+          startAct2
+        ), 900);
+      } else { Sound.arp(2,3,0.09,0.28); newPattern(); }
+    }
+  } else {
+    Sound.thud();
+    btn.classList.remove('wrong'); void btn.offsetWidth; btn.classList.add('wrong');
+  }
+}
+
+/* ============================================================
+   ACT 2 — GATHER THE MAGPIES
+   ============================================================ */
+let act2 = null;
+function startAct2(){
+  state.phase='act2';
+  act2={ placed:0, spawnT:0, cloudT:2600 };
+  bridgeMagpies=[]; freeMagpies=[]; clouds=[];
+  setHUD('Act II · The Magpie Bridge', `Magpies gathered 0 / ${BRIDGE_SLOTS}`);
+  for(let i=0;i<3;i++) spawnMagpie();
+}
+function spawnMagpie(){
+  const fromLeft = Math.random()<.5;
+  freeMagpies.push({
+    x: fromLeft? -30 : W+30,
+    y: rand(H*0.15,H*0.85),
+    vx: (fromLeft?1:-1)*rand(40,80)/1000,
+    vy: rand(-20,20)/1000,
+    p: Math.random()*TAU,
+    facing: fromLeft?1:-1,
+  });
+}
+function spawnCloud(){
+  const fromLeft = Math.random()<.5;
+  clouds.push({
+    x: fromLeft? -70: W+70,
+    y: rand(H*0.12, H*0.7),
+    vx: (fromLeft?1:-1)*rand(28,50)/1000,
+    s: rand(0.9,1.5), alpha: .95,
+  });
+}
+function updateAct2(t,dt){
+  act2.spawnT-=dt;
+  if(act2.spawnT<=0 && freeMagpies.length < 4 && act2.placed+freeMagpies.length+bridgeMagpies.length - bridgeMagpies.length < BRIDGE_SLOTS){
+    if(bridgeMagpies.length + freeMagpies.length < BRIDGE_SLOTS + 2) spawnMagpie();
+    act2.spawnT = rand(700,1500);
+  }
+  act2.cloudT-=dt;
+  if(act2.cloudT<=0 && clouds.length<2){
+    spawnCloud();
+    act2.cloudT = rand(4200,7200);
+  }
+  // move magpies
+  for(const m of freeMagpies){
+    m.x += m.vx*dt; m.y += m.vy*dt + (reducedMotion?0:Math.sin(t*0.004+m.p)*0.5);
+    if(m.x<-60||m.x>W+60){ m.vx*=-1; m.facing*=-1; }
+    if(m.y<H*0.08) m.vy=Math.abs(m.vy);
+    if(m.y>H*0.9) m.vy=-Math.abs(m.vy);
+    drawMagpie(m.x,m.y,magpieScale(),t*0.025+m.p,m.facing,false);
+  }
+  // clouds
+  for(let i=clouds.length-1;i>=0;i--){
+    const c=clouds[i];
+    c.x+=c.vx*dt;
+    drawCloud(c,t);
+    if(c.x<-140||c.x>W+140) clouds.splice(i,1);
+    else if(bridgeMagpies.length>0 && Math.random()<0.00035*dt && distToRiver(c)<layout.bandW){
+      // a grumpy cloud startles one magpie off the bridge
+      const lost = bridgeMagpies.pop();
+      act2.placed--;
+      setHUD('Act II · The Magpie Bridge', `Magpies gathered ${act2.placed} / ${BRIDGE_SLOTS}`);
+      toast('A rain cloud startled a magpie! ☔');
+      Sound.plink(true);
+      freeMagpies.push({x:lost.x,y:lost.y,vx:rand(-60,60)/1000,vy:rand(-50,-20)/1000,p:Math.random()*TAU,facing:Math.random()<.5?-1:1});
+      clouds.splice(i,1); puffPop(c.x,c.y);
+    }
+  }
+}
+function act2Pointer(px,py){
+  // clouds first (they're bigger and on top thematically)
+  for(let i=clouds.length-1;i>=0;i--){
+    const c=clouds[i];
+    if(Math.hypot(px-c.x,py-c.y) < 44*c.s){
+      puffPop(c.x,c.y); clouds.splice(i,1);
+      Sound.puff();
+      toast('Shoo, little storm! ✦');
+      return;
+    }
+  }
+  for(let i=freeMagpies.length-1;i>=0;i--){
+    const m=freeMagpies[i];
+    if(Math.hypot(px-m.x,py-m.y) < 42*magpieScale()){
+      freeMagpies.splice(i,1);
+      const slot = bridgeMagpies.length;
+      if(slot>=BRIDGE_SLOTS) return;
+      const s=layout.slots[slot];
+      bridgeMagpies.push({slot, x:m.x, y:m.y, tx:s.x, ty:s.y, settled:false});
+      act2.placed = bridgeMagpies.length;
+      setHUD('Act II · The Magpie Bridge', `Magpies gathered ${act2.placed} / ${BRIDGE_SLOTS}`);
+      sparkleBurst(m.x,m.y,5,'#cfd8ff');
+      Sound.chirp();
+      Sound.pluck(Sound.SCALE[slot % Sound.SCALE.length], 0.28, 0.1);
+      if(act2.placed>=BRIDGE_SLOTS){
+        clouds=[]; freeMagpies=[];
+        Sound.arp(0,6,0.09,0.32);
+        toast('The bridge of wings is complete ✦');
+        setTimeout(()=>showStory(
+          'Act II complete',
+          'A Bridge of Wings',
+          'Feather to feather, the magpies span the Heavenly River. Orihime steps to the bank, heart racing \u2014 one misstep and the current of stars will carry her home. <b>Hop when the light crosses the golden band</b> to guide her safely across.',
+          startAct3
+        ), 1000);
+      }
+      return;
+    }
+  }
+}
+
+/* ============================================================
+   ACT 3 — THE CROSSING
+   ============================================================ */
+let act3=null;
+function startAct3(){
+  state.phase='act3';
+  act3={ speed: 0.0021, dir:1, mt:0 };
+  orihime.slot=0;
+  const s0=layout.slots[0];
+  orihime.x=s0.x; orihime.y=s0.y-16*personScale();
+  orihime.hopping=false;
+  hikoboshi.x=layout.altair.x; hikoboshi.y=layout.altair.y+34;
+  setHUD('Act III · The Crossing', `Hops 0 / ${BRIDGE_SLOTS-1}`);
+  document.getElementById('hopPanel').classList.add('show');
+}
+function updateAct3(t,dt){
+  // marker
+  act3.mt += dt*act3.speed*act3.dir;
+  if(act3.mt>1){act3.mt=1;act3.dir=-1;}
+  if(act3.mt<0){act3.mt=0;act3.dir=1;}
+  const track=document.getElementById('track');
+  const marker=document.getElementById('marker');
+  marker.style.left = `calc(${(act3.mt*100).toFixed(2)}% - 4px)`;
+  // hop animation
+  if(orihime.hopping){
+    orihime.hopT += dt/480;
+    const p=Math.min(1,orihime.hopT);
+    const arc=Math.sin(p*Math.PI)*36*personScale();
+    orihime.x=lerp(orihime.from.x,orihime.to.x,p);
+    orihime.y=lerp(orihime.from.y,orihime.to.y,p)-arc;
+    if(p>=1){
+      orihime.hopping=false;
+      if(orihime.slot>=BRIDGE_SLOTS-1){
+        document.getElementById('hopPanel').classList.remove('show');
+        beginReunion();
+      }
+    }
+  } else if(orihime.slot>=0 && orihime.slot<BRIDGE_SLOTS){
+    const s=layout.slots[orihime.slot];
+    const bob = reducedMotion?0:Math.sin(t*0.003+orihime.slot)*2.4;
+    orihime.x=s.x; orihime.y=s.y-16*personScale()+bob;
+  }
+}
+function tryHop(){
+  if(state.phase!=='act3'||orihime.hopping) return;
+  const inSafe = act3.mt>0.35 && act3.mt<0.65;
+  if(inSafe){
+    const from={x:orihime.x,y:orihime.y};
+    const next=layout.slots[orihime.slot+1];
+    orihime.from=from;
+    orihime.to={x:next.x,y:next.y-16*personScale()};
+    orihime.slot++;
+    orihime.hopping=true; orihime.hopT=0;
+    act3.speed = Math.min(0.0033, act3.speed*1.12); // gentle ramp
+    setHUD('Act III · The Crossing', `Hops ${orihime.slot} / ${BRIDGE_SLOTS-1}`);
+    sparkleBurst(orihime.x,orihime.y+10,4,'#ffd166');
+    Sound.pluck(Sound.SCALE[orihime.slot % Sound.SCALE.length], 0.38);
+  } else {
+    Sound.plink();
+    toast('She wobbles — wait for the golden band ☔');
+    for(let i=0;i<5;i++) raindrops.push({x:orihime.x+rand(-30,30),y:orihime.y-rand(30,70),vy:rand(.12,.2),life:1});
+  }
+}
+
+/* ============================================================
+   REUNION → WISH → FINAL
+   ============================================================ */
+function beginReunion(){
+  state.phase='reunion';
+  reunionT=0;
+  Sound.reunion();
+  setHUD('','');
+  document.getElementById('hud').classList.add('hidden');
+}
+function updateReunion(t,dt){
+  if(state.phase==='reunion'){
+    reunionT+=dt;
+    const p=Math.min(1,reunionT/2000);
+    const end=layout.slots[BRIDGE_SLOTS-1];
+    const meet={x:end.x+layout.nrm.x*40, y:end.y+layout.nrm.y*40};
+    orihime.x=lerp(orihime.x,meet.x-14*personScale(),0.04);
+    orihime.y=lerp(orihime.y,meet.y-16*personScale(),0.04);
+    hikoboshi.x=lerp(hikoboshi.x,meet.x+14*personScale(),0.04);
+    hikoboshi.y=lerp(hikoboshi.y,meet.y-16*personScale(),0.04);
+    if(!reducedMotion && Math.random()<0.2) sparkleBurst(meet.x+rand(-40,40),meet.y+rand(-60,10),2,Math.random()<.5?'#ffd166':'#ff9fc0');
+    if(reunionT>2600){
+      state.phase='wish';
+      document.getElementById('wishOverlay').classList.remove('gone');
+    }
+  }
+  // keep drawing the pair through wish/final
+  drawPerson(orihime.x,orihime.y,personScale(),'orihime',t);
+  drawPerson(hikoboshi.x,hikoboshi.y,personScale(),'hikoboshi',t);
+  // small heart between them
+  if(state.phase!=='reunion'||reunionT>1400){
+    const hx=(orihime.x+hikoboshi.x)/2, hy=Math.min(orihime.y,hikoboshi.y)-34*personScale() + (reducedMotion?0:Math.sin(t*0.004)*3);
+    drawHeart(hx,hy,6.5*personScale());
+  }
+  if(state.phase==='final'){
+    // rising wish-lights
+    if(!reducedMotion && Math.random()<0.05) lanternWishes.push({x:rand(W*0.1,W*0.9),y:H+10,v:rand(.02,.05),p:Math.random()*TAU,life:1});
+    for(let i=lanternWishes.length-1;i>=0;i--){
+      const l=lanternWishes[i];
+      l.y-=l.v*dt; l.x+=Math.sin(state.time*0.002+l.p)*0.4;
+      ctx.globalAlpha=clamp(l.y/H,0,0.8);
+      ctx.fillStyle='#ffe9b8';
+      ctx.beginPath(); ctx.arc(l.x,l.y,2.2,0,TAU); ctx.fill();
+      ctx.globalAlpha=1;
+      if(l.y<-20) lanternWishes.splice(i,1);
+    }
+  }
+}
+function drawHeart(x,y,s){
+  ctx.save(); ctx.translate(x,y); ctx.scale(s/10,s/10);
+  ctx.fillStyle='#ff8fab';
+  ctx.beginPath();
+  ctx.moveTo(0,4);
+  ctx.bezierCurveTo(-10,-6,-4,-14,0,-7);
+  ctx.bezierCurveTo(4,-14,10,-6,0,4);
+  ctx.fill();
+  ctx.restore();
+}
+
+/* ============================================================
+   PARTICLES / FEEDBACK
+   ============================================================ */
+function puffPop(x,y){
+  for(let i=0;i<10;i++){
+    const a=Math.random()*TAU;
+    puffs.push({x,y,vx:Math.cos(a)*rand(.03,.12),vy:Math.sin(a)*rand(.03,.12),life:1,r:rand(3,8)});
+  }
+}
+function updatePuffs(dt){
+  for(let i=puffs.length-1;i>=0;i--){
+    const p=puffs[i];
+    p.x+=p.vx*dt; p.y+=p.vy*dt; p.life-=dt/600;
+    if(p.life<=0){puffs.splice(i,1);continue;}
+    ctx.globalAlpha=p.life*.7; ctx.fillStyle='#aab0d6';
+    ctx.beginPath(); ctx.arc(p.x,p.y,p.r*p.life+2,0,TAU); ctx.fill();
+    ctx.globalAlpha=1;
+  }
+}
+function sparkleBurst(x,y,n,color){
+  for(let i=0;i<n;i++){
+    const a=Math.random()*TAU;
+    sparkles.push({x,y,vx:Math.cos(a)*rand(.02,.1),vy:Math.sin(a)*rand(.02,.1)-.03,life:1,color});
+  }
+}
+function updateSparkles(dt){
+  for(let i=sparkles.length-1;i>=0;i--){
+    const s=sparkles[i];
+    s.x+=s.vx*dt; s.y+=s.vy*dt; s.life-=dt/900;
+    if(s.life<=0){sparkles.splice(i,1);continue;}
+    ctx.globalAlpha=s.life;
+    ctx.fillStyle=s.color;
+    const r=2.4*s.life;
+    ctx.beginPath();
+    ctx.moveTo(s.x,s.y-r*2); ctx.lineTo(s.x+r*.7,s.y); ctx.lineTo(s.x,s.y+r*2); ctx.lineTo(s.x-r*.7,s.y);
+    ctx.closePath(); ctx.fill();
+    ctx.globalAlpha=1;
+  }
+}
+function updateRain(dt){
+  for(let i=raindrops.length-1;i>=0;i--){
+    const r=raindrops[i];
+    r.y+=r.vy*dt; r.life-=dt/700;
+    if(r.life<=0){raindrops.splice(i,1);continue;}
+    ctx.globalAlpha=r.life*.8; ctx.strokeStyle='#a0beff'; ctx.lineWidth=1.6;
+    ctx.beginPath(); ctx.moveTo(r.x,r.y); ctx.lineTo(r.x-2,r.y+7); ctx.stroke();
+    ctx.globalAlpha=1;
+  }
+}
+
+/* ============================================================
+   UI PLUMBING
+   ============================================================ */
+function setHUD(a,p){
+  document.getElementById('actLabel').textContent=a;
+  document.getElementById('progressLabel').textContent=p;
+  document.getElementById('hud').classList.toggle('hidden', !a);
+}
+let toastTimer=null;
+function toast(msg){
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>el.classList.remove('show'),1800);
+}
+function showStory(eyebrow,title,html,next){
+  document.getElementById('storyEyebrow').textContent=eyebrow;
+  document.getElementById('storyTitle').textContent=title;
+  document.getElementById('storyText').innerHTML=html;
+  const ov=document.getElementById('storyOverlay');
+  ov.classList.remove('gone');
+  const btn=document.getElementById('storyBtn');
+  btn.onclick=()=>{ Sound.tick(); ov.classList.add('gone'); next(); };
+}
+
+document.getElementById('muteBtn').addEventListener('click',()=>{
+  const m = Sound.toggleMute();
+  document.getElementById('muteBtn').textContent = m ? '🔇' : '🔊';
+});
+
+document.getElementById('startBtn').addEventListener('click',()=>{
+  Sound.ensure();   // browsers require a user gesture before audio can start
+  Sound.tick();
+  document.getElementById('introOverlay').classList.add('gone');
+  showStory(
+    'Act I',
+    'The Weaving',
+    'Before she may cross, Orihime must prove her devotion at the loom, as she promised her father. <b>Tap the threads in the order of the pattern</b> to weave three rows of heavenly cloth.',
+    startAct1
+  );
+});
+
+document.getElementById('hopBtn').addEventListener('click',tryHop);
+window.addEventListener('keydown',e=>{
+  if(e.code==='Space'&&state.phase==='act3'){ e.preventDefault(); tryHop(); }
+});
+
+canvas.addEventListener('pointerdown',e=>{
+  const r=canvas.getBoundingClientRect();
+  const px=e.clientX-r.left, py=e.clientY-r.top;
+  if(state.phase==='act2') act2Pointer(px,py);
+});
+
+document.getElementById('hangBtn').addEventListener('click',()=>{
+  Sound.chime();
+  const txt=document.getElementById('wishText').value.trim() || 'health and happiness for the ones I love';
+  document.getElementById('wishOverlay').classList.add('gone');
+  document.getElementById('hungWish').textContent=txt;
+  document.getElementById('finalScene').classList.add('show');
+  state.phase='final';
+});
+
+document.getElementById('againBtn').addEventListener('click',()=>{
+  location.reload();
+});
+
+/* ---------- resize / boot ---------- */
+function resize(){
+  DPR=Math.min(2,window.devicePixelRatio||1);
+  W=window.innerWidth; H=window.innerHeight;
+  canvas.width=W*DPR; canvas.height=H*DPR;
+  canvas.style.width=W+'px'; canvas.style.height=H+'px';
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  computeLayout();
+  buildSky();
+  // resnap bridge + characters
+  bridgeMagpies.forEach(m=>{ const s=layout.slots[m.slot]; m.tx=s.x; m.ty=s.y; if(m.settled){m.x=s.x;m.y=s.y;} });
+  if(state.phase==='act3'&&!orihime.hopping&&orihime.slot>=0){
+    const s=layout.slots[orihime.slot]; orihime.x=s.x; orihime.y=s.y-16*personScale();
+  }
+}
+window.addEventListener('resize',resize);
+resize();
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
