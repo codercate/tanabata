@@ -69,7 +69,7 @@
   #hopPanel.show{display:flex;animation:rise .5s ease both;}
   #hopHint{font-size:12.5px;color:var(--ink-dim);letter-spacing:.08em;background:var(--panel);border:1px solid var(--panel-line);padding:6px 16px;border-radius:999px;}
   #track{position:relative;width:min(300px,80vw);height:16px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid var(--panel-line);overflow:hidden;}
-  #safe{position:absolute;top:0;bottom:0;left:35%;width:30%;background:linear-gradient(90deg,rgba(255,209,102,.15),rgba(255,209,102,.75),rgba(255,209,102,.15));}
+  #safe{position:absolute;top:0;bottom:0;left:27.5%;width:45%;background:linear-gradient(90deg,rgba(255,209,102,.15),rgba(255,209,102,.75),rgba(255,209,102,.15));}
   #marker{position:absolute;top:-2px;width:9px;height:20px;border-radius:4px;background:#fff;box-shadow:0 0 10px #fff;}
   #hopBtn{font-family:var(--font-display);font-size:16px;letter-spacing:.14em;color:#1b1440;background:linear-gradient(135deg,#8ecae6,#cdb4db);border:none;border-radius:999px;padding:13px 46px;cursor:pointer;box-shadow:0 4px 22px rgba(140,180,255,.35);}
   #hopBtn:active{transform:scale(.95);}
@@ -584,37 +584,83 @@ function drawPerson(x,y,scale,who,t){
   ctx.translate(x,y); ctx.scale(scale,scale);
   const sway = reducedMotion?0:Math.sin(t*0.003)*0.04;
   ctx.rotate(sway);
-  if(who==='orihime'){
-    // kimono
-    const g=ctx.createLinearGradient(0,-8,0,16);
-    g.addColorStop(0,'#ff9fb8'); g.addColorStop(1,'#e05a86');
-    ctx.fillStyle=g;
-    ctx.beginPath(); ctx.moveTo(0,-8); ctx.lineTo(11,16); ctx.lineTo(-11,16); ctx.closePath(); ctx.fill();
-    // sash
-    ctx.fillStyle='#ffd166'; ctx.fillRect(-7.4,1,14.8,3.4);
-    // head
-    ctx.fillStyle='#ffe4cf'; ctx.beginPath(); ctx.arc(0,-13,6.4,0,TAU); ctx.fill();
-    // hair
-    ctx.fillStyle='#33224d';
-    ctx.beginPath(); ctx.arc(0,-14.6,6.6,Math.PI*0.95,Math.PI*2.05); ctx.fill();
-    ctx.beginPath(); ctx.ellipse(0,-21,4.4,3,0,0,TAU); ctx.fill();
-    // hair pin
-    ctx.fillStyle='#ffd166'; ctx.beginPath(); ctx.arc(4.6,-19.4,1.6,0,TAU); ctx.fill();
+  const isO = who==='orihime';
+
+  // --- chibi body: small rounded kimono ---
+  const g=ctx.createLinearGradient(0,-6,0,15);
+  if(isO){ g.addColorStop(0,'#ffa9c1'); g.addColorStop(1,'#e2618d'); }
+  else   { g.addColorStop(0,'#a3d4f5'); g.addColorStop(1,'#5585cf'); }
+  ctx.fillStyle=g;
+  ctx.beginPath();
+  ctx.moveTo(0,-6);
+  ctx.quadraticCurveTo(10,-2, 9,14);
+  ctx.quadraticCurveTo(0,16.5, -9,14);
+  ctx.quadraticCurveTo(-10,-2, 0,-6);
+  ctx.fill();
+  // little sleeve arms
+  ctx.beginPath(); ctx.ellipse(-8.5,3,3.2,4.2, 0.4,0,TAU); ctx.fill();
+  ctx.beginPath(); ctx.ellipse( 8.5,3,3.2,4.2,-0.4,0,TAU); ctx.fill();
+  // obi sash
+  ctx.fillStyle = isO ? '#ffd166' : '#f4f2ff';
+  ctx.fillRect(-8,2.5,16,3.2);
+  ctx.fillStyle='rgba(0,0,0,0.08)';
+  ctx.fillRect(-8,5.1,16,0.9);
+
+  // --- big chibi head ---
+  ctx.fillStyle='#ffe9d6';
+  ctx.beginPath(); ctx.arc(0,-15,9.2,0,TAU); ctx.fill();
+
+  // --- hair ---
+  if(isO){
+    ctx.fillStyle='#3b2a59';
+    ctx.beginPath(); ctx.arc(0,-16.5,9.4,Math.PI*0.93,Math.PI*2.07); ctx.fill();
+    // side locks
+    ctx.beginPath(); ctx.ellipse(-8.6,-13,2.2,5, 0.15,0,TAU); ctx.fill();
+    ctx.beginPath(); ctx.ellipse( 8.6,-13,2.2,5,-0.15,0,TAU); ctx.fill();
+    // twin buns
+    ctx.beginPath(); ctx.arc(-7.5,-22.5,3.4,0,TAU); ctx.fill();
+    ctx.beginPath(); ctx.arc( 7.5,-22.5,3.4,0,TAU); ctx.fill();
+    // tiny flower pin on one bun
+    ctx.fillStyle='#ffd166';
+    for(let i=0;i<5;i++){
+      const a=i/5*TAU;
+      ctx.beginPath(); ctx.arc(7.5+Math.cos(a)*1.7,-22.5+Math.sin(a)*1.7,1.1,0,TAU); ctx.fill();
+    }
+    ctx.fillStyle='#ff8fab';
+    ctx.beginPath(); ctx.arc(7.5,-22.5,1,0,TAU); ctx.fill();
   } else {
-    const g=ctx.createLinearGradient(0,-8,0,16);
-    g.addColorStop(0,'#9bd0f2'); g.addColorStop(1,'#4f7fc9');
-    ctx.fillStyle=g;
-    ctx.beginPath(); ctx.moveTo(0,-8); ctx.lineTo(11,16); ctx.lineTo(-11,16); ctx.closePath(); ctx.fill();
-    ctx.fillStyle='#f4f2ff'; ctx.fillRect(-7.4,1,14.8,3.4);
-    ctx.fillStyle='#ffe4cf'; ctx.beginPath(); ctx.arc(0,-13,6.4,0,TAU); ctx.fill();
-    ctx.fillStyle='#22304d';
-    ctx.beginPath(); ctx.arc(0,-14.8,6.6,Math.PI*1.0,Math.PI*2.0); ctx.fill();
+    ctx.fillStyle='#2a3a5c';
+    ctx.beginPath(); ctx.arc(0,-16.8,9.4,Math.PI*0.98,Math.PI*2.02); ctx.fill();
+    // soft zigzag bangs
+    ctx.beginPath();
+    ctx.moveTo(-9,-15.5);
+    ctx.quadraticCurveTo(-6,-11.8, -4,-14.5);
+    ctx.quadraticCurveTo(-1.5,-11.5, 0.5,-14.6);
+    ctx.quadraticCurveTo(3,-11.8, 5,-14.8);
+    ctx.quadraticCurveTo(7.5,-12.5, 9,-15.5);
+    ctx.lineTo(9,-19); ctx.lineTo(-9,-19); ctx.closePath(); ctx.fill();
+    // little cowherd topknot
+    ctx.beginPath(); ctx.arc(0,-26,2.6,0,TAU); ctx.fill();
+    ctx.fillRect(-1,-25.4,2,3);
   }
-  // face
-  ctx.fillStyle='#33224d';
-  ctx.beginPath(); ctx.arc(-2.2,-13,0.9,0,TAU); ctx.arc(2.2,-13,0.9,0,TAU); ctx.fill();
-  ctx.strokeStyle='#c96a6a'; ctx.lineWidth=.9;
-  ctx.beginPath(); ctx.arc(0,-11.4,1.6,0.15*Math.PI,0.85*Math.PI); ctx.stroke();
+
+  // --- big sparkly anime eyes ---
+  const eyeY=-14.2;
+  [-3.6,3.6].forEach(ex=>{
+    ctx.fillStyle = isO ? '#4a2c56' : '#243a5e';
+    ctx.beginPath(); ctx.ellipse(ex,eyeY,2.1,2.8,0,0,TAU); ctx.fill();
+    ctx.fillStyle='#fff';
+    ctx.beginPath(); ctx.arc(ex-0.7,eyeY-1,0.9,0,TAU); ctx.fill();   // big highlight
+    ctx.beginPath(); ctx.arc(ex+0.6,eyeY+0.9,0.45,0,TAU); ctx.fill(); // small sparkle
+  });
+
+  // --- blush + smile ---
+  ctx.fillStyle='rgba(255,130,150,0.4)';
+  ctx.beginPath(); ctx.ellipse(-5.6,-11,1.9,1.1,0,0,TAU); ctx.fill();
+  ctx.beginPath(); ctx.ellipse( 5.6,-11,1.9,1.1,0,0,TAU); ctx.fill();
+  ctx.strokeStyle='#b3566a'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.arc(0,-11.6,1.7,0.15*Math.PI,0.85*Math.PI); ctx.stroke();
+
   ctx.restore();
 }
 
@@ -893,7 +939,7 @@ function act2Pointer(px,py){
 let act3=null;
 function startAct3(){
   state.phase='act3';
-  act3={ speed: 0.0021, dir:1, mt:0 };
+  act3={ speed: 0.0015, dir:1, mt:0 };
   orihime.slot=0;
   const s0=layout.slots[0];
   orihime.x=s0.x; orihime.y=s0.y-16*personScale();
@@ -932,7 +978,7 @@ function updateAct3(t,dt){
 }
 function tryHop(){
   if(state.phase!=='act3'||orihime.hopping) return;
-  const inSafe = act3.mt>0.35 && act3.mt<0.65;
+  const inSafe = act3.mt>0.275 && act3.mt<0.725;
   if(inSafe){
     const from={x:orihime.x,y:orihime.y};
     const next=layout.slots[orihime.slot+1];
@@ -940,7 +986,7 @@ function tryHop(){
     orihime.to={x:next.x,y:next.y-16*personScale()};
     orihime.slot++;
     orihime.hopping=true; orihime.hopT=0;
-    act3.speed = Math.min(0.0033, act3.speed*1.12); // gentle ramp
+    act3.speed = Math.min(0.0021, act3.speed*1.05); // very gentle ramp
     setHUD('Act III · The Crossing', `Hops ${orihime.slot} / ${BRIDGE_SLOTS-1}`);
     sparkleBurst(orihime.x,orihime.y+10,4,'#ffd166');
     Sound.pluck(Sound.SCALE[orihime.slot % Sound.SCALE.length], 0.38);
