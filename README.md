@@ -6,8 +6,6 @@ No installs, no dependencies, no build step. One HTML file, one starry night.
 
 ## ▶️ Play
 
-Open `tanabata.html` in any modern browser — that's it.
-
 Works with mouse or touch, on desktop and mobile. Turn your sound on 🔊 (there's a mute button if you'd rather play in silence).
 
 ## 🌌 The Story, in Three Acts
@@ -29,13 +27,9 @@ When the lovers reunite, write your own wish on a **tanzaku** and hang it on the
 
 ## 🛠 Tech Notes
 
-- Single self-contained `tanabata.html` (~40 KB): vanilla JavaScript, Canvas 2D, CSS, and Web Audio
+- Single self-contained `index.html` (~40 KB): vanilla JavaScript, Canvas 2D, CSS, and Web Audio
 - No frameworks, no assets, no network calls (fonts are the one optional external — the game falls back gracefully without them)
 - Audio starts after your first tap, as browsers require a user gesture
-
-## 🌐 Host It
-
-This is a perfect fit for GitHub Pages: rename `tanabata.html` to `index.html` (or copy it), enable Pages in the repo settings, and share your link.
 
 ## 📖 The Legend
 
