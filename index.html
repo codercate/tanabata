@@ -858,10 +858,16 @@ function spawnCloud(){
 }
 function updateAct2(t,dt){
   act2.spawnT-=dt;
-  if(act2.spawnT<=0 && freeMagpies.length < 4 && act2.placed+freeMagpies.length+bridgeMagpies.length - bridgeMagpies.length < BRIDGE_SLOTS){
-    if(bridgeMagpies.length + freeMagpies.length < BRIDGE_SLOTS + 2) spawnMagpie();
+  if(act2.spawnT<=0 && freeMagpies.length < 4 && act2.placed + freeMagpies.length < BRIDGE_SLOTS){
+    spawnMagpie();
     act2.spawnT = rand(700,1500);
   }
+  // watchdog: if the bridge is unfinished and no free birds exist for
+  // over a second, force-spawn one — the act can never soft-lock
+  if(act2.placed < BRIDGE_SLOTS && freeMagpies.length === 0){
+    act2.noBirdT = (act2.noBirdT||0) + dt;
+    if(act2.noBirdT > 1200){ spawnMagpie(); act2.noBirdT = 0; }
+  } else act2.noBirdT = 0;
   act2.cloudT-=dt;
   if(act2.cloudT<=0 && clouds.length<2){
     spawnCloud();
@@ -870,9 +876,16 @@ function updateAct2(t,dt){
   // move magpies
   for(const m of freeMagpies){
     m.x += m.vx*dt; m.y += m.vy*dt + (reducedMotion?0:Math.sin(t*0.004+m.p)*0.5);
-    if(m.x<-60||m.x>W+60){ m.vx*=-1; m.facing*=-1; }
-    if(m.y<H*0.08) m.vy=Math.abs(m.vy);
-    if(m.y>H*0.9) m.vy=-Math.abs(m.vy);
+    // once a bird has flown on screen, keep it there: clamp position and
+    // steer inward (a bare velocity flip can re-trigger every frame and
+    // trap the bird jittering off-screen — the soft-lock bug)
+    if(!m.entered && m.x>40 && m.x<W-40) m.entered=true;
+    if(m.entered){
+      if(m.x < 25){  m.x = 25;   m.vx =  Math.abs(m.vx); m.facing = 1; }
+      if(m.x > W-25){ m.x = W-25; m.vx = -Math.abs(m.vx); m.facing = -1; }
+    }
+    if(m.y < H*0.08){ m.y = H*0.08; m.vy =  Math.abs(m.vy); }
+    if(m.y > H*0.9){  m.y = H*0.9;  m.vy = -Math.abs(m.vy); }
     drawMagpie(m.x,m.y,magpieScale(),t*0.025+m.p,m.facing,false);
   }
   // clouds
@@ -888,7 +901,7 @@ function updateAct2(t,dt){
       setHUD('Act II · The Magpie Bridge', `Magpies gathered ${act2.placed} / ${BRIDGE_SLOTS}`);
       toast('A rain cloud startled a magpie! ☔');
       Sound.plink(true);
-      freeMagpies.push({x:lost.x,y:lost.y,vx:rand(-60,60)/1000,vy:rand(-50,-20)/1000,p:Math.random()*TAU,facing:Math.random()<.5?-1:1});
+      freeMagpies.push({x:lost.x,y:lost.y,vx:rand(-60,60)/1000,vy:rand(-50,-20)/1000,p:Math.random()*TAU,facing:Math.random()<.5?-1:1,entered:true});
       clouds.splice(i,1); puffPop(c.x,c.y);
     }
   }
